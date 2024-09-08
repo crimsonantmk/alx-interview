@@ -1,32 +1,25 @@
 #!/usr/bin/node
-const id = process.argv[2];
-const url = 'https://swapi-api.alx-tools.com/api/films/' + id;
 const request = require('request');
+const API_URL = 'https://swapi-api.hbtn.io/api';
 
-function retrive (urlChar) {
-  return new Promise(function (resolve, reject) {
-    request(urlChar, function getChar (err2, response2, body2) {
-      if (err2) {
-        reject(err2);
-      } else {
-        resolve(JSON.parse(body2).name);
-      }
-    });
+if (process.argv.length > 2) {
+  request(`${API_URL}/films/${process.argv[2]}/`, (err, _, body) => {
+    if (err) {
+      console.log(err);
+    }
+    const charactersURL = JSON.parse(body).characters;
+    const charactersName = charactersURL.map(
+      url => new Promise((resolve, reject) => {
+        request(url, (promiseErr, __, charactersReqBody) => {
+          if (promiseErr) {
+            reject(promiseErr);
+          }
+          resolve(JSON.parse(charactersReqBody).name);
+        });
+      }));
+
+    Promise.all(charactersName)
+      .then(names => console.log(names.join('\n')))
+      .catch(allErr => console.log(allErr));
   });
 }
-
-async function getlist (urlist) {
-  for (const urlChar of urlist) {
-    const character = await retrive(urlChar);
-    console.log(character);
-  }
-}
-
-request(url, function getList (err, response, body) {
-  if (err) {
-    throw err;
-  } else {
-    const urlist = JSON.parse(body).characters;
-    getlist(urlist);
-  }
-});
